@@ -918,7 +918,6 @@ PyMODINIT_FUNC initcec(void) {
    // Make sure threads are enabled in the python interpreter
    // this also acquires the global interpreter lock
    PyEval_InitThreads();
-   
 
    // set up libcec
    //  libcec config
