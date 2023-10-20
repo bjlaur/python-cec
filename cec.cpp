@@ -918,13 +918,38 @@ PyMODINIT_FUNC initcec(void) {
    // Make sure threads are enabled in the python interpreter
    // this also acquires the global interpreter lock
    PyEval_InitThreads();
+   
 
    // set up libcec
    //  libcec config
    CEC_config = new libcec_configuration();
    CEC_config->Clear();
 
-   snprintf(CEC_config->strDeviceName, 13, "python-cec");
+   const char* envDeviceName = getenv("PYTHONCEC_DEVICE_NAME");
+   if (envDeviceName) {
+       // If the environment variable is set, use its value
+       snprintf(CEC_config->strDeviceName, 13, "%s", envDeviceName);
+   } else {
+       // Otherwise, use the default value
+       snprintf(CEC_config->strDeviceName, 13, "python-cec");
+   }
+
+   const char* envDeviceType = getenv("PYTHONCEC_DEVICE_TYPE");
+   int deviceTypeValue = -1; 
+    
+   if (envDeviceType) {
+       deviceTypeValue = atoi(envDeviceType);
+   }
+    
+   if (deviceTypeValue >= 0 && deviceTypeValue <= CEC_DEVICE_TYPE_AUDIO_SYSTEM) {
+       //if the environment variable is set and valid, use this value
+       CEC_config->deviceTypes.Add(static_cast<CEC::cec_device_type>(deviceTypeValue));
+   } else {
+       // Otherwise, use the default value 
+       CEC_config->deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
+   }
+
+
    // CEC_CLIENT_VERSION_CURRENT was introduced in 2.0.4
    // just use 2.1.0 because the conditional is simpler
 #if CEC_LIB_VERSION_MAJOR >= 3
@@ -937,7 +962,6 @@ PyMODINIT_FUNC initcec(void) {
    CEC_config->clientVersion = CEC_CLIENT_VERSION_1_6_0;
 #endif
    CEC_config->bActivateSource = 0;
-   CEC_config->deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
 
 
    //  libcec callbacks
